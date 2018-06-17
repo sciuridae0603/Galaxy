@@ -8,14 +8,12 @@ import one.oktw.galaxy.Main
 
 open class StarDustCalcHelper {
     companion object {
-
-        val itemToDust: HashMap<String, Double> = HashMap<String, Double>()
-
-        val unSetKeyList: HashMap<String, String> = HashMap<String, String>()
+        private val itemToDust: HashMap<String, Double> = HashMap()
+        private val unSetKeyList: HashMap<String, String> = HashMap()
 
         init {
             //基本物品定義星塵數量
-            itemToDust.put("tile.netherquartz",512.0)
+            itemToDust.put("tile.netherquartz", 512.0)
             itemToDust.put("tile.obsidian", 64.0)
             itemToDust.put("tile.oreCoal", 128.0)
             itemToDust.put("tile.oreDiamond", 8192.0)
@@ -143,59 +141,59 @@ open class StarDustCalcHelper {
             itemToDust.put("tile.shulkerBoxYellow", 10240.0)
         }
 
+        private fun getRecipe(item: ItemStack): Pair<Array<ItemStack>, Int> {
+            var itemRecipe = emptyArray<ItemStack>()
 
-        fun getRecipe(item: ItemStack): Pair<Array<ItemStack>, Int> {
-            var ItemRecipe = emptyArray<ItemStack>()
-            CraftingManager.REGISTRY.forEach { recipe ->
+            CraftingManager.REGISTRY.iterator().forEach { recipe ->
                 if (item.isItemEqualIgnoreDurability(recipe.recipeOutput)) {
                     recipe.ingredients.forEach { item ->
                         if (item.matchingStacks.count() != 0) {
-                            ItemRecipe += item.matchingStacks.first()
+                            itemRecipe += item.matchingStacks.first()
                         }
                     }
-                    return ItemRecipe to recipe.recipeOutput.count
+                    return itemRecipe to recipe.recipeOutput.count
                 }
             }
             FurnaceRecipes.instance().smeltingList.forEach { recipe ->
                 if (item.isItemEqualIgnoreDurability(recipe.value)) {
-                    ItemRecipe += recipe.key
-                    return ItemRecipe to 1
+                    itemRecipe += recipe.key
+                    return itemRecipe to 1
                 }
             }
-            return ItemRecipe to 1
+            return itemRecipe to 1
         }
 
-        public fun getDustCount(item: ItemStack): Double {
+        fun getDustCount(item: ItemStack): Double {
             val (itemRecipe, outputQuantity) = getRecipe(item)
             var dustCount = 0.0
             val itemID = item.unlocalizedName.split(".")[0] + "." + item.unlocalizedName.split(".")[1]
+
             if (itemRecipe.count() == 0) {
                 if (!itemToDust.containsKey(itemID)) {
                     if (!unSetKeyList.contains(itemID)) {
-                        unSetKeyList.put(itemID, item.displayName);
+                        unSetKeyList.put(itemID, item.displayName)
                     }
-                    Main.main.logger.warn("Can't found item star dust quantity , use default value -> 1  Item : " + itemID)
+                    Main.main.logger.warn("Can't found item star dust quantity , use default value -> 1  Item : $itemID")
                 }
                 return itemToDust[itemID] ?: 0.0
             }
+
             itemRecipe.forEach { i ->
-                val itemID = i.unlocalizedName.split(".")[0] + "." + i.unlocalizedName.split(".")[1]
-                if (itemToDust.containsKey(itemID)) {
-                    dustCount += itemToDust[itemID] ?: 0.0
+                val id = i.unlocalizedName.split(".")[0] + "." + i.unlocalizedName.split(".")[1]
+                dustCount += if (itemToDust.containsKey(id)) {
+                    itemToDust[id] ?: 0.0
                 } else {
-                    dustCount += (getDustCount(i) * (1.0 / outputQuantity))
+                    (getDustCount(i) * (1.0 / outputQuantity))
                 }
             }
             return (dustCount * item.count)
         }
 
-        public fun getUnSetKey(): HashMap<String, String> {
-            Item.REGISTRY.forEach { i ->
+        fun getUnSetKey(): HashMap<String, String> {
+            Item.REGISTRY.iterator().forEach { i ->
                 getDustCount(ItemStack(i))
             }
             return (unSetKeyList)
         }
-
     }
 }
-
