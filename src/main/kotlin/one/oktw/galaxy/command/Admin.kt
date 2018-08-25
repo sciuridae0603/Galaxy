@@ -14,9 +14,11 @@ class Admin : CommandBase {
         .child(Viewer().spec, "viewer")
         .child(TPX().spec, "tpx")
         .child(PlayerInfo().spec, "player")
-        .child(GalaxyInfo().spec, "galaxy_info")
-        .child(GalaxyManage().spec, "galaxy_manage")
+        .child(GalaxyInfo().spec, "galaxyInfo")
+        .child(GalaxyManage().spec, "galaxyManage")
         .child(Block().spec, "block")
+        .child(DeleteWorld().spec, "deleteWorld")
+        .child(UnloadWorld().spec, "unloadWorld")
         .executor(this)
         .build()
 
